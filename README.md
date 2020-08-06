@@ -1,55 +1,70 @@
-# Snap Shot [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=See%20this%20react%20example&url=https://yog9.github.io/SnapShot/&hashtags=react,context-api,freecodecamp,developers)
+# Handytec Test
 
-[![Build Status](https://travis-ci.org/Yog9/SnapShot.svg?branch=master)](https://travis-ci.org/Yog9/SnapShot)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![HitCount](http://hits.dwyl.com/Yog9/SnapShot.svg)](http://hits.dwyl.com/Yog9/SnapShot)
+This repository contains the code of a basic ***React JS*** app and some files to implement the ***CI/CD*** process using ***Github Actions***, build **Docker Images and push them to Docker Hub** and deploy the code to ***Heroku***.
 
-[Demo of Snap Shot](https://yog9.github.io/SnapShot/)
+## Branching Model
+For this project works with the next types of branches:
 
-![](/snapscout.png)
+ - **master:** This is the production branch, all the code in master branch is production ready code, every new release is merged to this branch using a Pull Request, when something is pushed to branch a new version tag with the form *vX.X.X* is created automatically.
+ - **release:** This branch contains the new features that will be merged in master to added it as new production code, releases branches are used for QA to verify that the changes are working as expected. This branch is created from the development branch.
+ - **development:** This is the branch that contains the latest code, is used to merge the changes of all the feature branches created by the developers, when a new feature y ready to testing a release branch is created from here. Also is needed to regularly pull changes from master to keep development updated for changes made in releases or hotfix branches.
+ - **hotfix:** This branch is used when a change is required in production as soon as possible, this branch is created from master and pushed back again to solve the problem.
 
-### Summary
+The next image shows how this implementation works.
 
-Snap Shot is a gallery created using React,React Hooks, React Router and Context API. The Routes were setup for four default pages and a search page. Also the images were displayed using the Flickr API and axios to fetch data.
+![Branching](./branching.png)
 
-### Motivation
+## Merging Considerations 
 
-The purpose of this project was to get familiar with React Hooks and Context API.
+To keep a correct functionality you must follow this rules to keep a good quality of code and avoid errors when merge branches:
 
-### Getting Started
+ - All merges to development, release and master branch are made with a pull request that must be reviewed and approved  by the architect or the senior developer of the project.
+ - A merge is only allowed if the tests from the continuous integration system passed. 
+ -  Keep development branch all the time pulling regularly changes from master.
+ - Create one release at the time and merge it to master to continue to another.
 
-Click the demo link or clone/download the repository on your local machine.
-Create a config.js file in api folder inside src folders. In config.js file write
-`export const apiKey = "YOUR_FLIKR_API_KEY";`
+## Continuous Integration
 
-##### Install dependencies
+The system for continuous integration is created using Github Actions, the file containing the configuration is located in ***.github/workflows/main.yaml*** and works in this way:
 
-`yarn install`
+ - Any change pushed to any branch trigger the pipeline to run the unit tests of the project.
+ - When a change is pushed to the braches development, release or master a docker image is created with this code and pushed to the images repository DockerHub [https://hub.docker.com/repository/docker/steveozo/snapshot-frontend](https://hub.docker.com/repository/docker/steveozo/snapshot-frontend)
 
-##### Run Snap Shot from the root directory.
+## Continuous Deployment
 
-`yarn start`
+The continuous deployment is triggered when the continuous integration process ends, the deploy only happens when the push was to the development, release or master branch and works in this way:
 
-### Built With
+ - **development:** the code is built and deployed to the development environment. [https://handytec-dev.herokuapp.com/](https://handytec-dev.herokuapp.com/)
+ - **release:** the code is built and deployed to the testing environment. [https://handytec-test.herokuapp.com/](https://handytec-test.herokuapp.com/)
+ - **master:** the code is built and deployed to the master environment. [https://handytec-prod.herokuapp.com/](https://handytec-prod.herokuapp.com/)
 
-- React js
-- React Router
-- React Hooks
-- Context API
-- Flickr API
+After every deployment a health check is configured in the pipeline to check that the deployment was created correctly and the app is still working.
 
-### Features
+## Local Development
 
-**1. Responsive Design.**
+To start a local development of this application download the code and execute the commands:
+```
+# Check that you have node and yarn installed in your system
+yarn install
+yarn start
+```
+If you want to setup a docker version of development, release or master you can use a docker image from this repository [https://hub.docker.com/repository/docker/steveozo/snapshot-frontend](https://hub.docker.com/repository/docker/steveozo/snapshot-frontend)
+The image tags are created in the form of branch-buildNumber, for example master-13
+To run the image in your machine execute:
 
-**2. Search functionality added to search photos from API.**
+    #Check that you have docker installed and the port 80 is not used by another application
+    docker run -it -p 80:80 steveozo/snapshot-frontend:master-13
 
-### Coming Soon
 
-- [ ] Cypress E2E Tests
+## Executing the CI/CD
+To check that the CI/CD is working follow this steps:
 
-### Contributing
-
-Everyone is welcomed to contribute to this project. You can contribute either by submitting bugs or suggesting improvements by opening an issue on GitHub. Please see the [CONTRIBUTING](CONTRIBUTING.md) guidelines for more information.
-
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+ - Create a branch from development
+ - Make changes in this branch and push to github.
+ - Check that the tests passed and create a pull request to merge this branch into development.
+ - After the pull request is approved and merged the changes will be deployed in the heroku dev environment.
+ - Create a branch with the name **release** from development.
+ - This branch **release** will trigger a deploy to the heroku test environment and you can appreciate the changes.
+ - Create a pull request from this **release** branch to the **master** branch.
+ - After the tests passed and the pull request was approved and merged the changes will be available in the heroku prod environment and a new tag is created in giithub. For default the patch number is increased in every merge to master, unless you can change this version number if in any commit to master you include some of this rules [https://github.com/marketplace/actions/github-tag#bumping](https://github.com/marketplace/actions/github-tag#bumping)
+  
